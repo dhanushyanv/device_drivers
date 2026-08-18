@@ -3,7 +3,7 @@
 #include <unistd.h>
 int main()
 {
-    int fd = open("/dev/mychar");
+    int fd = open("/dev/mychar", O_RDWR);
     if(fd <0)
     {
       perror("Failed to open the device");
