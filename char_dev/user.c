@@ -24,6 +24,19 @@ int main()
     }
     printf("bytes written %ld\n", bytes_written);
     
+    char buffer[1024];
+    ssize_t bytes_read;
+    bytes_read = read(fd,buffer,sizeof(buffer)-1);
+    if(bytes_read < 0)
+    {
+        perror("Failed to read");
+        close(fd);
+        printf("device closed successfully\n");
+        return 1;
+    }
+    buffer[bytes_read] = '\0';
+    printf("bytes read %ld: %s\n", bytes_read, buffer);
+
     close(fd);
     printf("device closed successfully\n");
     return 0;
