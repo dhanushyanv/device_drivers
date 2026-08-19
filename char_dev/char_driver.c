@@ -11,6 +11,7 @@ MODULE_DESCRIPTION("A simple Character Device Driver");
 static dev_t dev_num;
 static struct cdev my_cdev;
 static struct class *char_class;
+static size_t data_size = 0;
 
 #define BUFFER_SIZE 1024
 static char kernel_buffer[BUFFER_SIZE];
@@ -30,15 +31,14 @@ static int char_driver_release(struct inode *inode, struct file *file)
 static ssize_t char_driver_write(struct file* file, const char __user *user_buffer, size_t count,loff_t *offset)
 {
 	size_t bytes_to_copy;
-	bytes_to_copy = min(count,(size_t)(BUFFER_SIZE -1));
+	bytes_to_copy = min(count,(size_t)(BUFFER_SIZE));
 	if(copy_from_user(kernel_buffer,user_buffer,bytes_to_copy))
 	{
 		printk(KERN_ERR "Failed to copy data from user");
 			return -EFAULT;
 	}
-
-	kernel_buffer[bytes_to_copy] = '\0';
-	printk(KERN_INFO "Received from user: %s \n",kernel_buffer);
+    data_size = bytes_to_copy;
+	printk(KERN_INFO "Received from user: %s bytes=%zu\n",kernel_buffer, bytes_to_copy);
 	return bytes_to_copy;
 }
 
@@ -46,12 +46,18 @@ static ssize_t char_driver_write(struct file* file, const char __user *user_buff
 static ssize_t char_driver_read(struct file* file, char __user *user_buffer, size_t count, loff_t *offset)
 {
 	size_t bytes_to_copy;
-	bytes_to_copy = min(count,(size_t)(BUFFER_SIZE -1));
-	if(copy_to_user(user_buffer,kernel_buffer,bytes_to_copy))
+    if(*offset >= data_size)
+    {
+        return 0; // No more data to read
+    }
+    
+	bytes_to_copy = min(count, data_size - (size_t)(*offset));
+	if(copy_to_user(user_buffer,kernel_buffer + *offset,bytes_to_copy))
 	{
 		printk(KERN_ERR "Failed to copy data to user");
 			return -EFAULT;
 	}
+    *offset += bytes_to_copy;
 
 	printk(KERN_INFO "Sent to user: %s \n",kernel_buffer);
 	return bytes_to_copy;
