@@ -1,6 +1,6 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/init.h
+#include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 
@@ -30,35 +30,35 @@ static ssize_t char_driver_write(struct file* file, const char __user *user_buff
 {
 	size_t bytes_to_copy;
 	bytes_to_copy = min(count,(size_t)(BUFFER_SIZE -1));
-	if(copy_from_user(kernel_buffer,user_buffer,bytes_to_copy)
+	if(copy_from_user(kernel_buffer,user_buffer,bytes_to_copy))
 	{
 		printk(KERN_ERR "Failed to copy data from user");
-			return -EFAULT:
+			return -EFAULT;
 	}
 
 	kernel_buffer[bytes_to_copy] = '\0';
 	printk(KERN_INFO "Received from user: %s \n",kernel_buffer);
-	retun bytes_to_copy;
+	return bytes_to_copy;
 }
 
-static const struct file_operation fops = {
-  .owner = THIS_MODULE;
-  .open = char_driver_open;
-  .release = char_driver_release;
-	.write = char_driver_write;
+static const struct file_operations fops = {
+  .owner = THIS_MODULE,
+  .open = char_driver_open,
+  .release = char_driver_release,
+	.write = char_driver_write,
 
 };
 
 static int __init char_driver_init(void)
 {
   int ret; 
-  alloc_chrdev_region(dev_num,0,1,"my char device");
+  ret = alloc_chrdev_region(&dev_num,0,1,"my char device");
   if( ret <0)
   {
-    printk(KERN_ALERT "Failed to allocate major number"\n);
+    printk(KERN_ALERT "Failed to allocate major number\n");
     return ret;
   }
-  printk("KERN_INFO "Major = %d , Minor=%d", MAJOR(dev_num), MINOR(dev_num));
+  printk(KERN_INFO "Major = %d , Minor=%d", MAJOR(dev_num), MINOR(dev_num));
   cdev_init(&my_cdev, &fops);
   ret = cdev_add(&my_cdev, dev_num,1);
   if(ret < 0)
@@ -77,10 +77,10 @@ static void __exit char_driver_exit(void)
     unregister_chrdev_region(dev_num, 1);
     printk(KERN_INFO "Character Device Driver Exited!\n");
 }
+  
 module_init(char_driver_init);
 module_exit(char_driver_exit);
-
-
+  
   
 
 
