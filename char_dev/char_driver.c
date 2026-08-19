@@ -41,11 +41,27 @@ static ssize_t char_driver_write(struct file* file, const char __user *user_buff
 	return bytes_to_copy;
 }
 
+static ssize_t char_driver_read(struct file* file, char __user *user_buffer, size_t count, loff_t *offset)
+{
+	size_t bytes_to_copy;
+	bytes_to_copy = min(count,(size_t)(BUFFER_SIZE -1));
+	if(copy_to_user(user_buffer,kernel_buffer,bytes_to_copy))
+	{
+		printk(KERN_ERR "Failed to copy data to user");
+			return -EFAULT;
+	}
+
+	printk(KERN_INFO "Sent to user: %s \n",kernel_buffer);
+	return bytes_to_copy;
+}
+
 static const struct file_operations fops = {
   .owner = THIS_MODULE,
   .open = char_driver_open,
   .release = char_driver_release,
-	.write = char_driver_write,
+    .write = char_driver_write,
+    .read = char_driver_read,
+
 
 };
 
@@ -80,7 +96,6 @@ static void __exit char_driver_exit(void)
   
 module_init(char_driver_init);
 module_exit(char_driver_exit);
-  
-  
 
 
+  
