@@ -6,6 +6,10 @@
 
 #define MY_CHAR_MAGIC 'D'
 #define CLEAR_BUFFER _IO(MY_CHAR_MAGIC,1)
+#define GET_DATA_SIZE _IOR(MY_CHAR_MAGIC,2,size_t)
+#define RESET_DATA_SIZE _IO(MY_CHAR_MAGIC,3)
+//write -> get data size-> reset    
+
 
 int main()
 {
@@ -27,6 +31,24 @@ int main()
         return 1;
     }
     printf("bytes written %ld\n", bytes_written);
+    // Get data size using ioctl
+    size_t data_size;
+    if(ioctl(fd, GET_DATA_SIZE, &data_size) < 0)
+    {
+        perror("Failed to get data size");
+        close(fd);
+        return 1;
+    }
+    printf("data size %zu\n", data_size);
+
+    // Reset data size using ioctl
+    if(ioctl(fd, RESET_DATA_SIZE) < 0)
+    {
+        perror("Failed to reset data size");
+        close(fd);
+        return 1;
+    }
+
     // Clear the buffer using ioctl
     if(ioctl(fd, CLEAR_BUFFER) < 0)
     {
