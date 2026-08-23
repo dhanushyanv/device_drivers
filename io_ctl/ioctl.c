@@ -3,7 +3,7 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
-#include <ioctl.h>
+#include <linux/ioctl.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dhanu");
@@ -19,6 +19,8 @@ static char kernel_buffer[BUFFER_SIZE];
 
 #define MY_CHAR_MAGIC 'D'
 #define CLEAR_BUFFER _IO(MY_CHAR_MAGIC,1)
+#define GET_DATA_SIZE _IOR(MY_CHAR_MAGIC,2,size_t)
+#define RESET_DATA_SIZE _IO(MY_CHAR_MAGIC,3)
 
 static int char_driver_open(struct inode *inode, struct file *file)
 {
@@ -76,9 +78,24 @@ static long my_ioctl(struct file* file, unsigned int cmd, unsigned long arg)
           memset(kernel_buffer,0,BUFFER_SIZE);
           data_size =0;
           printk(KERN_INFO "Ioctl: buffer cleared");
-          break:
+          break;
         }
-      deafult:
+      case GET_DATA_SIZE:
+        {
+          if(copy_to_user((size_t __user *)arg, &data_size, sizeof(size_t)))
+          {
+            printk(KERN_ERR "Failed to copy data size to user");
+            return -EFAULT;
+          }
+          break;
+        }
+      case RESET_DATA_SIZE:
+        {
+          data_size = 0;
+          printk(KERN_INFO "Ioctl: data size reset");
+          break;
+        }
+      default:
         return -EINVAL;
     }
   return 0;
